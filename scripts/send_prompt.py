@@ -1,7 +1,7 @@
 import requests
 import json
 
-# 🚨 Temporary hardcoded API key for testing (go get your own)
+
 
 
 PROXY_URL = "http://localhost:8080"  # MITMProxy address
