@@ -20,7 +20,7 @@ def classify_text(text):
         response.raise_for_status()
         result = response.json()
         
-        # Extract classification label (assuming the API returns it as `category`)
+        # Extract classification label 
         classification = result.get("choices", [{}])[0].get("text", "safe").strip().lower()
 
         if classification in BLOCK_CATEGORIES:
