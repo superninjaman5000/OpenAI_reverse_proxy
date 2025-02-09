@@ -1,11 +1,13 @@
 import requests
 import json
+import os
 
-# 🚨 Temporary hardcoded API key for testing (Replace with your real key)
-OPENAI_API_KEY = "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"
+# Use Environment Variable for API Key
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise ValueError("Missing OpenAI API Key! Set it using 'export OPENAI_API_KEY=your_key_here'")
 
-PROXY_URL = "http://localhost:8080"  # MITMProxy address
-OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+PROXY_URL = "http://localhost:8080"  # MITMProxy Address
 
 headers = {
     "Authorization": f"Bearer {OPENAI_API_KEY}",
@@ -18,6 +20,9 @@ data = {
     "max_tokens": 50
 }
 
-response = requests.post(OPENAI_URL, headers=headers, json=data, proxies={"http": PROXY_URL, "https": PROXY_URL})
-
-print("Response:", response.json())
+try:
+    response = requests.post(f"{PROXY_URL}/v1/chat/completions", headers=headers, json=data)
+    response.raise_for_status()
+    print("Response:", response.json())
+except requests.exceptions.RequestException as e:
+    print(f"Error: {e}")

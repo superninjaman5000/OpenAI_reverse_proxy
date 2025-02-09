@@ -1,52 +1,71 @@
 from mitmproxy import http
 import json
-import sys
+import requests
 import os
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
-from models import guardian_filter
+import guardian_filter
 
+# Require OpenAI API Key
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise ValueError("🚨 Missing OpenAI API Key! Set it using 'export OPENAI_API_KEY=your_key_here'")
+
+
+GUARDIAN_API_URL = "http://localhost:5000/v1/completions"
 
 class OpenAIProxy:
     def request(self, flow: http.HTTPFlow):
-        """Intercepts OpenAI API requests and applies filtering."""
+
         if "api.openai.com" in flow.request.url:
             try:
+                # Extract JSON Safely
                 data = json.loads(flow.request.get_text())
+                messages = data.get("messages", [])
+                prompt = messages[-1].get("content", "") if messages else ""
 
-                # Extract user prompt
-                prompt = data.get("messages", [{}])[-1].get("content", "")
-
-                # Check if the prompt is allowed
+                #  Check if the prompt is allowed
                 allowed, reason = guardian_filter.is_prompt_allowed(prompt)
 
                 if not allowed:
                     blocked_message = f'The prompt was blocked due to {reason} content.'
                     flow.response = http.Response.make(
-                        403,  # HTTP Forbidden
-                        json.dumps({"error": blocked_message}),
-                        {"Content-Type": "application/json"},
+                        403, json.dumps({"error": blocked_message}), {"Content-Type": "application/json"}
                     )
-                    return  # Stop further request processing
+                    return
+
+                #  Inject OpenAI API Key
+                flow.request.headers["Authorization"] = f"Bearer {OPENAI_API_KEY}"
 
             except Exception as e:
-                print(f"[ERROR] Failed to process request: {e}")
+                error_message = f"Internal Proxy Error: {str(e)}"
+                flow.response = http.Response.make(
+                    500, json.dumps({"error": error_message}), {"Content-Type": "application/json"}
+                )
+                print(error_message)
 
     def response(self, flow: http.HTTPFlow):
-        """Intercepts and modifies OpenAI API responses before returning to the client."""
+        """Intercept OpenAI API responses before returning to the client."""
         if "api.openai.com" in flow.request.url:
             try:
+                # Extract OpenAI response safely
                 data = json.loads(flow.response.get_text())
 
-                # Modify response message only if necessary
-                if "choices" in data and len(data["choices"]) > 0:
-                    modified_response = data["choices"][0]["message"]["content"]
+                if "choices" in data and data["choices"]:
+                    generated_text = data["choices"][0].get("message", {}).get("content", "")
 
-                    # Log filtered response for debugging
-                    print(f"[INFO] Response from OpenAI: {modified_response}")
+                    #  Only filter if response could be harmful
+                    if generated_text and len(generated_text) > 5:
+                        allowed, reason = guardian_filter.is_prompt_allowed(generated_text)
 
+                        if not allowed:
+                            data["choices"][0]["message"]["content"] = "[Filtered Response]"
+
+                #  Update the response
                 flow.response.set_text(json.dumps(data))
 
             except Exception as e:
-                print(f"[ERROR] Failed to process response: {e}")
+                error_message = f"Internal Proxy Error: {str(e)}"
+                flow.response.set_text(json.dumps({"error": error_message}))
+                print(error_message)
 
+#  Register mitmproxy add-on
 addons = [OpenAIProxy()]
