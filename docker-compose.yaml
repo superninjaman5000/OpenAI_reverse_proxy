@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  ai_services:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai_services
+    ports:
+      - "5000:5000"
+    environment:
+      - GUARDIAN_API_URL=http://localhost:5000
+
+  mitmproxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.mitmproxy
+    container_name: mitmproxy
+    depends_on:
+      - ai_services
+    ports:
+      - "8080:8080"
