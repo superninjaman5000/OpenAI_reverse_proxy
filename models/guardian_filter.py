@@ -2,7 +2,7 @@ import requests
 import os
 
 # Define IBM Granite Guardian API URL
-GUARDIAN_API_URL = os.getenv("GUARDIAN_API_URL", "http://localhost:5000/v1/completions")
+GUARDIAN_API_URL = "http://localhost:5000/v1/completions"
 
 # Define block categories
 BLOCK_CATEGORIES = ["violent", "illegal", "sexual", "toxic"]
