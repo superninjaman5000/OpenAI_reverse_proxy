@@ -1,6 +1,7 @@
 from mitmproxy import http
 import json
-import guardian_filter  # Import the filtering module
+from models import guardian_filter
+
 
 class OpenAIProxy:
     def request(self, flow: http.HTTPFlow):
