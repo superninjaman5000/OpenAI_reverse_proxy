@@ -2,7 +2,7 @@ import requests
 import json
 
 # 🚨 Temporary hardcoded API key for testing (go get your own)
-OPENAI_API_KEY 
+
 
 PROXY_URL = "http://localhost:8080"  # MITMProxy address
 OPENAI_URL = "https://api.openai.com/v1/chat/completions"
