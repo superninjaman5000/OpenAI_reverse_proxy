@@ -8,7 +8,7 @@ PROXY_URL = "http://localhost:8080"  # MITMProxy address
 OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 
 headers = {
-    "Authorization": f"Bearer {OPENAI_API_KEY}",
+    "Authorization": f"Bearer {}",
     "Content-Type": "application/json"
 }
 
