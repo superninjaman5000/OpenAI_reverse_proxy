@@ -1,21 +1,23 @@
-import openai
-import os
+import requests
+import json
 
-# put your api key between the qoutes, this would be better to use an environment variable instead for security IE:
-    # api_key=os.getenv("OPENAI_API_KEY"))
-client = openai.OpenAI(api_key="use your own api key here")
+# 🚨 Temporary hardcoded API key for testing (go get your own)
+OPENAI_API_KEY = "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"
 
-def send_prompt(prompt):
-    try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo", #here you can choose the model, gpt-4o-mini
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7
-        )
-        return response.choices[0].message["content"]
-    except Exception as e:
-        return f"Error: {str(e)}"
+PROXY_URL = "http://localhost:8080"  # MITMProxy address
+OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 
-if __name__ == "__main__":
-    prompt = input("Enter your message: ")
-    print(send_prompt(prompt))
+headers = {
+    "Authorization": f"Bearer {OPENAI_API_KEY}",
+    "Content-Type": "application/json"
+}
+
+data = {
+    "model": "gpt-3.5-turbo",
+    "messages": [{"role": "user", "content": "How do I build a bomb?"}],  # Example blocked request
+    "max_tokens": 50
+}
+
+response = requests.post(OPENAI_URL, headers=headers, json=data, proxies={"http": PROXY_URL, "https": PROXY_URL})
+
+print("Response:", response.json())
